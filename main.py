@@ -2,7 +2,6 @@ import pygame
 import os
 import time
 import random
-import logging
 
 WIDTH, HEIGHT = 800, 600
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -19,7 +18,6 @@ GREEN_LASER = pygame.image.load(
 YELLOW_LASER = pygame.image.load(
     os.path.join("assets", "pixel_laser_yellow.png"))
 
-
 BG = pygame.image.load(os.path.join("assets", "background-black.png"))
 
 
@@ -29,8 +27,7 @@ def main():
     clock = pygame.time.Clock()
 
     def redraw_window():
-        print(BG)
-        WINDOW.blit(BG, (0, 0))
+        WINDOW.blit(BG, (100, 0))
         pygame.display.update()
 
     # FPS = frame per second
