@@ -94,7 +94,9 @@ class Player(Cell):
                     if laser.collision(obj):
                         objs.remove(obj)
                         self.lasers.remove(laser)
-
+    def healthbar(self, window):
+        pygame.draw.rect(window, (255,0,0), (self.x, self.y + cell_img.get.height() + 10, self.cell_img.get.width()), 10)
+        #TODO need to create healthbar and some laser goes right through enemies
 
 class Enemy(Cell):
     COLOR_MAP = {
@@ -110,8 +112,7 @@ class Enemy(Cell):
 
     def move(self, vel):
         self.y += vel
-
-
+   
 class Laser:
     def __init__(self, x, y, img):
         self.x = x
@@ -120,7 +121,7 @@ class Laser:
         self.mask = pygame.mask.from_surface(self.img)
 
     def draw(self, window):
-         window.blit(self.img, (self.x, self.y))
+         window.blit(self.img, (self.x - 25, self.y - 50 ))
 
     def move(self, vel):
         self.y += vel
@@ -133,8 +134,8 @@ class Laser:
 
 
 def collide(obj1, obj2):
-    offset_x = int(obj2.x - obj1.x)
-    offset_y = int(obj2.y - obj1.y)
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
 
@@ -156,7 +157,7 @@ def main():
 
     laser_vel = 5
 
-    player = Player(WIDTH/2 - CELL.get_width()/2, 500)
+    player = Player(int(WIDTH/2 - CELL.get_width()/2), 500)
 
     clock = pygame.time.Clock()
 
@@ -190,7 +191,7 @@ def main():
             lost_count += 1
 
         if lost:
-            if lost_count > FPS * 3:
+            if lost_count > FPS * 5:
                 run = False
             else:
                 continue
@@ -222,12 +223,19 @@ def main():
         for enemy in enemies[:]:
             enemy.move(enemy_vel)
             enemy.move_lasers(laser_vel, player)
-            if enemy.y + enemy.get_height() > HEIGHT:
+
+            if random.randrange(0, 2*60)==1:
+                enemy.shoot()
+
+            if collide(enemy, player):
+                player.health -= 10
+                enemies.remove(enemy)
+
+            elif enemy.y + enemy.get_height() > HEIGHT:
                 lives -= 1
                 enemies.remove(enemy)
 
-
-        player.move_lasers(laser_vel, enemies)       
+        player.move_lasers(-laser_vel, enemies)       
 
         redraw_window()
 
