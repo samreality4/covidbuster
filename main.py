@@ -26,7 +26,7 @@ YELLOW_LASER = pygame.image.load(
     os.path.join("assets", "pixel_laser_yellow.png"))
 
 BG = pygame.transform.scale(pygame.image.load(
-    os.path.join("assets", "background-black.png")), (WIDTH, HEIGHT))
+    os.path.join("assets", "background-red.jpg")), (WIDTH, HEIGHT))
 
 
 class Cell:
@@ -93,10 +93,19 @@ class Player(Cell):
                 for obj in objs:
                     if laser.collision(obj):
                         objs.remove(obj)
-                        self.lasers.remove(laser)
+                        if laser in self.lasers:
+                            self.lasers.remove(laser)
+
     def healthbar(self, window):
-        pygame.draw.rect(window, (255,0,0), (self.x, self.y + cell_img.get.height() + 10, self.cell_img.get.width()), 10)
-        #TODO need to create healthbar and some laser goes right through enemies
+        pygame.draw.rect(window, (255, 0, 0), (self.x, self.y +
+                                               self.cell_img.get_height() + 10, self.cell_img.get_width(), 10))
+        pygame.draw.rect(window, (0, 255, 0), (self.x, self.y + self.cell_img.get_height() +
+                                               10, self.cell_img.get_width() * (self.health/self.max_health), 10))
+
+    def draw(self, window):
+        super().draw(window)
+        self.healthbar(window)
+
 
 class Enemy(Cell):
     COLOR_MAP = {
@@ -105,14 +114,15 @@ class Enemy(Cell):
         "blue": (BLUE_VIRUS, BLUE_LASER)
     }
 
-    def __init__(self, x, y, color, health=100):
+    def __init__(self, x, y, color, health=10):
         super().__init__(x, y, health=health)
         self.cell_img, self.laser_img = self.COLOR_MAP[color]
         self.mask = pygame.mask.from_surface(self.cell_img)
 
     def move(self, vel):
         self.y += vel
-   
+
+
 class Laser:
     def __init__(self, x, y, img):
         self.x = x
@@ -121,7 +131,7 @@ class Laser:
         self.mask = pygame.mask.from_surface(self.img)
 
     def draw(self, window):
-         window.blit(self.img, (self.x - 25, self.y - 50 ))
+        window.blit(self.img, (self.x - 25, self.y - 50))
 
     def move(self, vel):
         self.y += vel
@@ -178,13 +188,14 @@ def main():
         if lost:
             lost_label = lost_font.render(
                 "Take some vitamin pills and try again!!", 1, (255, 255, 255))
-            WINDOW.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 350))
+            WINDOW.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 200))
 
         pygame.display.update()
 
     # FPS = frame per second
     while run:
         clock.tick(FPS)
+        redraw_window()
 
         if lives <= 0 or player.health <= 0:
             lost = True
@@ -215,7 +226,7 @@ def main():
             player.x += player_vel
         if keys[pygame.K_UP] and player.y + player_vel > 0:
             player.y -= player_vel
-        if keys[pygame.K_DOWN] and player.y + player_vel + player.get_height() < HEIGHT:
+        if keys[pygame.K_DOWN] and player.y + player_vel + player.get_height() + 15 < HEIGHT:
             player.y += player_vel
         if keys[pygame.K_SPACE]:
             player.shoot()
@@ -224,7 +235,7 @@ def main():
             enemy.move(enemy_vel)
             enemy.move_lasers(laser_vel, player)
 
-            if random.randrange(0, 2*60)==1:
+            if random.randrange(0, 2*60) == 1:
                 enemy.shoot()
 
             if collide(enemy, player):
@@ -235,9 +246,25 @@ def main():
                 lives -= 1
                 enemies.remove(enemy)
 
-        player.move_lasers(-laser_vel, enemies)       
-
-        redraw_window()
+        player.move_lasers(-laser_vel, enemies)
 
 
-main()
+def main_menu():
+    title_font = pygame.font.SysFont("comicsans", 60)
+    run = True
+    while run:
+        WINDOW.blit(BG, (0, 0))
+        title_label = title_font.render(
+            "Press the mouse to begin...", 1, (255, 255, 255))
+        WINDOW.blit(
+            title_label, (int(WIDTH/2 - title_label.get_width()/2), 300))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                main()
+    pygame.quit()
+
+
+main_menu()
