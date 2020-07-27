@@ -25,9 +25,14 @@ GREEN_LASER = pygame.image.load(
 YELLOW_LASER = pygame.image.load(
     os.path.join("assets", "pixel_laser_yellow.png"))
 
+OMEGA_LASER = pygame.image.load(
+    os.path.join("assets", "omega.png"))
+
 BG = pygame.transform.scale(pygame.image.load(
     os.path.join("assets", "background-red.jpg")), (WIDTH, HEIGHT))
 
+
+###############################
 
 class Cell:
     COOLDOWN = 30
@@ -75,16 +80,36 @@ class Cell:
             self.cool_down_counter = 1
 
 
+###############################
+
+
 class Player(Cell):
+    OMEGA_COOLDOWN = 120
+
     def __init__(self, x, y, health=100):
         super().__init__(x, y, health=health)
         self.cell_img = CELL
         self.laser_img = YELLOW_LASER
         self.mask = pygame.mask.from_surface(self.cell_img)
         self.max_health = health
+        self.omega_laser_img = OMEGA_LASER
+        self.omega_cool_down_counter = 0
+
+    def shoot_omega(self):
+        if self.cool_down_counter == 0:
+            laser = Laser(self.x, self.y, self.omega_laser_img)
+            self.lasers.append(laser)
+            self.omega_cool_down_counter = 1
+
+    def omega_cooldown(self):
+        if self.omega_cool_down_counter >= self.OMEGA_COOLDOWN:
+            self.omega_cool_down_counter = 0
+        elif self.omega_cool_down_counter > 0:
+            self.omega_cool_down_counter += 1
 
     def move_lasers(self, vel, objs):
         self.cooldown()
+        self.omega_cooldown()
         for laser in self.lasers:
             laser.move(vel)
             if laser.off_screen(HEIGHT):
@@ -106,6 +131,8 @@ class Player(Cell):
         super().draw(window)
         self.healthbar(window)
 
+###############################
+
 
 class Enemy(Cell):
     COLOR_MAP = {
@@ -122,16 +149,18 @@ class Enemy(Cell):
     def move(self, vel):
         self.y += vel
 
+###############################
+
 
 class Laser:
     def __init__(self, x, y, img):
-        self.x = x
-        self.y = y
+        self.x = x - 25
+        self.y = y - 50
         self.img = img
         self.mask = pygame.mask.from_surface(self.img)
 
     def draw(self, window):
-        window.blit(self.img, (self.x - 25, self.y - 50))
+        window.blit(self.img, (self.x, self.y))
 
     def move(self, vel):
         self.y += vel
@@ -141,6 +170,8 @@ class Laser:
 
     def collision(self, obj):
         return collide(self, obj)
+
+###############################
 
 
 def collide(obj1, obj2):
@@ -230,6 +261,8 @@ def main():
             player.y += player_vel
         if keys[pygame.K_SPACE]:
             player.shoot()
+        if keys[pygame.K_z]:
+            player.shoot_omega()
 
         for enemy in enemies[:]:
             enemy.move(enemy_vel)
