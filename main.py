@@ -4,19 +4,21 @@ import time
 import random
 
 pygame.font.init()
+pygame.mixer.init()
 
 WIDTH, HEIGHT = 800, 600
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Covid Busters")
 
 
-RED_VIRUS = pygame.image.load(os.path.join("assets", "red-virus.png"))
-BLUE_VIRUS = pygame.image.load(os.path.join("assets", "blue-virus.png"))
-GREEN_VIRUS = pygame.image.load(os.path.join("assets", "green-virus.png"))
+pygame.mixer.music.load(os.path.join("assets", "bgmusic.ogg"))
+pygame.mixer.music.play(-1)
 
+RED_VIRUS = pygame.image.load(os.path.join("assets", "red_virus.png"))
+BLUE_VIRUS = pygame.image.load(os.path.join("assets", "blue_virus.png"))
+GREEN_VIRUS = pygame.image.load(os.path.join("assets", "green_virus.png"))
 
 CELL = pygame.image.load(os.path.join("assets", "white_blood_cell.png"))
-
 
 RED_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_red.png"))
 BLUE_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_blue.png"))
@@ -27,6 +29,12 @@ YELLOW_LASER = pygame.image.load(
 
 OMEGA_LASER = pygame.image.load(
     os.path.join("assets", "omega.png"))
+
+LASER_SOUND = pygame.mixer.Sound(os.path.join("assets", "regular_laser.wav"))
+OMEGA_LASER_SOUND = pygame.mixer.Sound(
+    os.path.join("assets", "omega_laser.wav"))
+DESTROYED_SOUND = pygame.mixer.Sound(
+    os.path.join("assets", "pop.wav"))
 
 BG = pygame.transform.scale(pygame.image.load(
     os.path.join("assets", "background-red.jpg")), (WIDTH, HEIGHT))
@@ -64,6 +72,7 @@ class Cell:
             if laser.off_screen(HEIGHT):
                 self.lasers.remove(laser)
             elif laser.collision(obj):
+                
                 obj.health -= 10
                 self.lasers.remove(laser)
 
@@ -84,7 +93,7 @@ class Cell:
 
 
 class Player(Cell):
-    OMEGA_COOLDOWN = 120
+    OMEGA_COOLDOWN = 80
 
     def __init__(self, x, y, health=100):
         super().__init__(x, y, health=health)
@@ -95,10 +104,18 @@ class Player(Cell):
         self.omega_laser_img = OMEGA_LASER
         self.omega_cool_down_counter = 0
 
-    def shoot_omega(self):
+    def shoot(self):
         if self.cool_down_counter == 0:
+            laser = Laser(self.x, self.y, self.laser_img)
+            self.lasers.append(laser)
+            pygame.mixer.Sound.play(LASER_SOUND)
+            self.cool_down_counter = 1
+
+    def shoot_omega(self):
+        if self.omega_cool_down_counter == 0:
             laser = Laser(self.x, self.y, self.omega_laser_img)
             self.lasers.append(laser)
+            pygame.mixer.Sound.play(OMEGA_LASER_SOUND)
             self.omega_cool_down_counter = 1
 
     def omega_cooldown(self):
@@ -117,6 +134,7 @@ class Player(Cell):
             else:
                 for obj in objs:
                     if laser.collision(obj):
+                        pygame.mixer.Sound.play(DESTROYED_SOUND)
                         objs.remove(obj)
                         if laser in self.lasers:
                             self.lasers.remove(laser)
@@ -202,6 +220,8 @@ def main():
 
     clock = pygame.time.Clock()
 
+    
+
     def redraw_window():
         WINDOW.blit(BG, (0, 0))
 
@@ -272,6 +292,7 @@ def main():
                 enemy.shoot()
 
             if collide(enemy, player):
+                pygame.mixer.Sound.play(DESTROYED_SOUND)
                 player.health -= 10
                 enemies.remove(enemy)
 
@@ -285,6 +306,7 @@ def main():
 def main_menu():
     title_font = pygame.font.SysFont("comicsans", 60)
     run = True
+
     while run:
         WINDOW.blit(BG, (0, 0))
         title_label = title_font.render(
